@@ -36,6 +36,8 @@ namespace MapleNecrocer;
 
 public partial class MainForm : Form
 {
+    internal const string StartupMapId = "270000200";
+
     public MainForm()
     {
         InitializeComponent();
@@ -60,6 +62,7 @@ public partial class MainForm : Form
         ToolTipView.ShowID = true;
         ToolTipView.ShowMenu = true;
         ToolTipView.StartPosition = FormStartPosition.CenterParent;
+        Shown += MainForm_Shown;
 
         //  RenderForm.Show();
     }
@@ -73,14 +76,19 @@ public partial class MainForm : Form
     public AfrmTooltip ToolTipView;
     DefaultLevel skillDefaultLevel = DefaultLevel.Level0;
     int skillInterval = 32;
+    private readonly RecentFolderStore recentFolderStore = new(
+        Path.Combine(Environment.CurrentDirectory, "RecentFiles.txt"));
+    private bool startupCompleted;
+
+    internal IReadOnlyList<string> RecentFolders => recentFolderStore.Read();
     public void CenterToScreen2()
     {
         this.CenterToScreen();
     }
 
-    public static void OpenWZ(string wzFilePath)
+    public static bool OpenWZ(string wzFilePath)
     {
-        MainForm.Instance.openWz(wzFilePath);
+        return MainForm.Instance.openWz(wzFilePath);
     }
 
     string LeftStr(string s, int count)
@@ -300,7 +308,7 @@ public partial class MainForm : Form
         }
     }
 
-    public void openWz(string wzFilePath)
+    public bool openWz(string wzFilePath)
     {
         foreach (Wz_Structure wzs in openedWz)
         {
@@ -309,7 +317,7 @@ public partial class MainForm : Form
                 if (string.Compare(wz_f.Header.FileName, wzFilePath, true) == 0)
                 {
                     MessageBoxEx.Show("已經開啟的wz", "OK");
-                    return;
+                    return true;
                 }
             }
         }
@@ -352,42 +360,24 @@ public partial class MainForm : Form
             // node.Expand();
             // advTree1.Nodes.Add(node);
             this.openedWz.Add(wz);
-            // QueryPerformance.End();
+
+            Wz.IsDataWz = Wz.GetNode("Mob")?.FullPathToFile.LeftStr(4) == "Data";
+            Wz.HasStringWz = !Wz.HasNode("Mob/0100100.img/info/name");
+            Wz.HasHardCodedStrings = !Wz.HasStringWz && !Wz.HasNode("String");
+            Wz.HasMap9Dir = Wz.HasNode("Map/Map/Map1");
+            return true;
         }
         catch (FileNotFoundException)
         {
             MessageBoxEx.Show("檔案沒找到", "OK");
+            wz.Clear();
+            return false;
         }
         catch (Exception ex)
         {
             MessageBoxEx.Show(ex.ToString(), "OK");
             wz.Clear();
-        }
-        finally
-        {
-            //  advTree1.EndUpdate();
-        }
-
-        Wz.IsDataWz = false;
-        if (Wz.GetNode("Mob").FullPathToFile.LeftStr(4) == "Data")
-            Wz.IsDataWz = true;
-
-        Wz.HasStringWz = true;
-        if (Wz.HasNode("Mob/0100100.img/info/name"))
-        {
-            Wz.HasStringWz = false;
-        }
-
-        if (Wz.HasStringWz == false && Wz.HasNode("String") == false)
-        {
-            Wz.HasHardCodedStrings = true;
-        }
-
-
-        Wz.HasMap9Dir = false;
-        if (Wz.HasNode("Map/Map/Map1"))
-        {
-            Wz.HasMap9Dir = true;
+            return false;
         }
     }
 
@@ -395,6 +385,7 @@ public partial class MainForm : Form
     {
         foreach (var Iter in this.openedWz)
             Iter.Clear();
+        openedWz.Clear();
     }
 
     enum DefaultLevel
@@ -819,13 +810,115 @@ public partial class MainForm : Form
         DPIUtil.dpiY = dpiY;
     }
 
+    private void MainForm_Shown(object? sender, EventArgs e)
+    {
+        if (startupCompleted)
+        {
+            return;
+        }
+
+        startupCompleted = true;
+        string? recentFolder = recentFolderStore.FindMostRecentValid(path =>
+            MapleStoryFolderLocator.FindDataFile(path) is not null);
+        if (recentFolder is null || !LoadMapleStoryFolder(recentFolder))
+        {
+            ShowFolderSelection();
+        }
+    }
+
+    internal void ShowFolderSelection()
+    {
+        SelectFolderForm form = SelectFolderForm.Instance ?? new SelectFolderForm();
+        form.RefreshRecentFolders();
+        form.Show();
+        form.BringToFront();
+    }
+
+    internal bool LoadMapleStoryFolder(string folderPath)
+    {
+        string? dataFile = MapleStoryFolderLocator.FindDataFile(folderPath);
+        if (dataFile is null)
+        {
+            MessageBox.Show("Base.wz or Data.wz not found", "MapleStory folder");
+            return false;
+        }
+
+        RemoveWz();
+        MapListBox.Rows.Clear();
+        using (Graphics graphic = MapListBox.CreateGraphics())
+        using (var font = new System.Drawing.Font(FontFamily.GenericSansSerif, 20, FontStyle.Bold))
+        {
+            graphic.DrawString("Loading...", font, Brushes.Black, 10, 50);
+        }
+
+        if (!OpenWZ(dataFile))
+        {
+            return false;
+        }
+
+        MapNames.Clear();
+        ApplyMapGridLocale();
+        DumpMapIDs();
+        recentFolderStore.Promote(folderPath);
+        TryLoadStartupMap();
+        return true;
+    }
+
+    private void ApplyMapGridLocale()
+    {
+        string stringPath = Wz.HasHardCodedStrings
+            ? "Mob/0100100.img/info/name"
+            : "String/Mob.img/100100/name";
+        bool usesEnglishFont = Wz.GetNode(stringPath)?.ToStr() == "Snail";
+
+        MapListBox.Columns[0].Width = usesEnglishFont ? 72 : 76;
+        if (usesEnglishFont)
+        {
+            MapListBox.Font = new System.Drawing.Font("Arial", 13f, GraphicsUnit.Pixel);
+            MapListBox.SearchGrid.Font = new System.Drawing.Font("Arial", 13f, GraphicsUnit.Pixel);
+        }
+        else
+        {
+            MapListBox.DefaultCellStyle.Font = new System.Drawing.Font("Microsoft JhengHei", 13f, GraphicsUnit.Pixel);
+            MapListBox.SearchGrid.DefaultCellStyle.Font = new System.Drawing.Font("Microsoft JhengHei", 13f, GraphicsUnit.Pixel);
+        }
+    }
+
+    private bool TryLoadStartupMap()
+    {
+        StartupMapResolution? resolution = StartupMapResolver.Resolve(
+            StartupMapId,
+            Wz.HasMap9Dir,
+            Wz.HasNode,
+            linkPath => Wz.GetNode(linkPath)?.Value?.ToString());
+        if (resolution is null)
+        {
+            MessageBox.Show(
+                $"目前 WZ 中找不到啟動地圖 {StartupMapId}。",
+                "找不到啟動地圖");
+            return false;
+        }
+
+        try
+        {
+            Map.ID = resolution.ResolvedMapId;
+            LoadMap();
+            LoadMapButton.Enabled = true;
+            ToolTipView.Visible = false;
+            return true;
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"載入啟動地圖 {StartupMapId} 時發生錯誤：{ex.Message}",
+                "啟動地圖載入失敗");
+            return false;
+        }
+    }
+
     private void OpenFolderButton_Click(object sender, EventArgs e)
     {
-        if (SelectFolderForm.Instance == null)
-            new SelectFolderForm().Show();
-        else
-            SelectFolderForm.Instance.Show();
-        OpenFolderButton.Enabled = false;
+        ShowFolderSelection();
     }
 
     private void MapListBox_SelectedIndexChanged(object sender, EventArgs e)

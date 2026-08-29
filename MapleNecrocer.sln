@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WzComparerR2.WzLib", "WzCom
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WzComparerR2.PluginBase", "WzComparerR2.PluginBase\WzComparerR2.PluginBase.csproj", "{29D42561-B432-434D-88FD-166C1EFD3650}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MapleNecrocer.Tests", "MapleNecrocer.Tests\MapleNecrocer.Tests.csproj", "{DCAD75B7-20E1-46F7-87B8-388BEA5160E2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,14 @@ Global
 		{29D42561-B432-434D-88FD-166C1EFD3650}.Release|Any CPU.Build.0 = Release|Any CPU
 		{29D42561-B432-434D-88FD-166C1EFD3650}.Release|x64.ActiveCfg = Release|Any CPU
 		{29D42561-B432-434D-88FD-166C1EFD3650}.Release|x64.Build.0 = Release|Any CPU
+		{DCAD75B7-20E1-46F7-87B8-388BEA5160E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCAD75B7-20E1-46F7-87B8-388BEA5160E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DCAD75B7-20E1-46F7-87B8-388BEA5160E2}.Debug|x64.ActiveCfg = Debug|x64
+		{DCAD75B7-20E1-46F7-87B8-388BEA5160E2}.Debug|x64.Build.0 = Debug|x64
+		{DCAD75B7-20E1-46F7-87B8-388BEA5160E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DCAD75B7-20E1-46F7-87B8-388BEA5160E2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DCAD75B7-20E1-46F7-87B8-388BEA5160E2}.Release|x64.ActiveCfg = Release|x64
+		{DCAD75B7-20E1-46F7-87B8-388BEA5160E2}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -17,7 +17,7 @@ public class Sound
 {
     public static Dictionary<string, BassSoundPlayer> SoundDict = new Dictionary<string, BassSoundPlayer>();
     public static List<BassSoundPlayer> PlayendList=new();
-    public static bool isMute = false;
+    public static bool isMute = true;
 
     public static void Init()
     {
@@ -135,6 +135,7 @@ public class Music
         if (Child.Value is Wz_Sound)
         {
             byte[] Data = ((Wz_Sound)Child.Value).ExtractSound();
+            MusicPlayer.AutoPlay = MusicPlaybackPolicy.ShouldAutoPlay(Sound.isMute);
             MusicPlayer.PreLoad(Data);
             MusicPlayer.Loop=true;
            // MusicPlayer.Resume();
