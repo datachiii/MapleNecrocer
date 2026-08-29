@@ -25,6 +25,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="MapleNecrocer.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="AForge">
       <HintPath>..\Reference\AForge.dll</HintPath>
     </Reference>

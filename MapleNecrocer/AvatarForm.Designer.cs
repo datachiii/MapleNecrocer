@@ -103,6 +103,9 @@
             label4 = new Label();
             comboBox1 = new ComboBox();
             ShowToolTil_CheckBox = new CheckBox();
+            CashOnlyCheckBox = new CheckBox();
+            GenderFilterLabel = new Label();
+            GenderFilterComboBox = new ComboBox();
             label5 = new Label();
             EarListBox = new ComboBox();
             timer1 = new System.Windows.Forms.Timer(components);
@@ -1024,6 +1027,43 @@
             ShowToolTil_CheckBox.UseVisualStyleBackColor = true;
             ShowToolTil_CheckBox.CheckedChanged += ShowToolTil_CheckBox_CheckedChanged;
             // 
+            // CashOnlyCheckBox
+            // 
+            CashOnlyCheckBox.AutoSize = true;
+            CashOnlyCheckBox.Checked = true;
+            CashOnlyCheckBox.CheckState = CheckState.Checked;
+            CashOnlyCheckBox.Font = new Font("Tahoma", 14F, FontStyle.Regular, GraphicsUnit.Pixel);
+            CashOnlyCheckBox.Location = new Point(12, 198);
+            CashOnlyCheckBox.Name = "CashOnlyCheckBox";
+            CashOnlyCheckBox.Size = new Size(86, 21);
+            CashOnlyCheckBox.TabIndex = 27;
+            CashOnlyCheckBox.Text = "Cash Only";
+            CashOnlyCheckBox.UseVisualStyleBackColor = true;
+            CashOnlyCheckBox.CheckedChanged += CashOnlyCheckBox_CheckedChanged;
+            // 
+            // GenderFilterLabel
+            // 
+            GenderFilterLabel.AutoSize = true;
+            GenderFilterLabel.Font = new Font("Tahoma", 14F, FontStyle.Regular, GraphicsUnit.Pixel);
+            GenderFilterLabel.Location = new Point(112, 199);
+            GenderFilterLabel.Name = "GenderFilterLabel";
+            GenderFilterLabel.Size = new Size(49, 17);
+            GenderFilterLabel.TabIndex = 28;
+            GenderFilterLabel.Text = "Gender";
+            // 
+            // GenderFilterComboBox
+            // 
+            GenderFilterComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+            GenderFilterComboBox.Font = new Font("Tahoma", 14F, FontStyle.Regular, GraphicsUnit.Pixel);
+            GenderFilterComboBox.FormattingEnabled = true;
+            GenderFilterComboBox.Items.AddRange(new object[] { "All", "Male", "Female" });
+            GenderFilterComboBox.Location = new Point(167, 194);
+            GenderFilterComboBox.Name = "GenderFilterComboBox";
+            GenderFilterComboBox.Size = new Size(95, 25);
+            GenderFilterComboBox.TabIndex = 29;
+            GenderFilterComboBox.SelectedIndex = 0;
+            GenderFilterComboBox.SelectedIndexChanged += GenderFilterComboBox_SelectedIndexChanged;
+            // 
             // label5
             // 
             label5.AutoSize = true;
@@ -1056,6 +1096,9 @@
             Controls.Add(EarListBox);
             Controls.Add(label5);
             Controls.Add(ShowToolTil_CheckBox);
+            Controls.Add(CashOnlyCheckBox);
+            Controls.Add(GenderFilterComboBox);
+            Controls.Add(GenderFilterLabel);
             Controls.Add(comboBox1);
             Controls.Add(label4);
             Controls.Add(tabControl1);
@@ -1153,6 +1196,9 @@
         private Label label4;
         public ComboBox comboBox1;
         private CheckBox ShowToolTil_CheckBox;
+        private CheckBox CashOnlyCheckBox;
+        private Label GenderFilterLabel;
+        private ComboBox GenderFilterComboBox;
         private Label label5;
         private ComboBox EarListBox;
         private TabPage tabPage6;

@@ -34,6 +34,7 @@ public partial class OptionForm : Form
 
     private void OptionForm_Shown(object sender, EventArgs e)
     {
+        checkBox1.Checked = Sound.isMute;
         this.FormClosing += (s, e1) =>
         {
             this.Hide();

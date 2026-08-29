@@ -47,6 +47,7 @@ public partial class AvatarForm : Form
         FrameListDraw.Top = 0;
         FrameListDraw.Parent = panel2;
         Instance = this;
+        InitializeHistoryTab();
     }
     private string[] AllFrames = {
         "walk1.0", "walk1.1", "walk1.2", "walk1.3",
@@ -105,12 +106,158 @@ public partial class AvatarForm : Form
 
     static bool ShowToolTip = true;
     ImageListView[] ImageGrids = new ImageListView[21];
+    private readonly AvatarEquippedItemLookup equippedItemLookup = new();
+    private readonly AvatarItemHistory itemHistory = new();
+    private readonly Dictionary<string, (Bitmap Icon, string Name)> historyDisplayCache = new();
+    private TabPage historyTabPage = null!;
+    private BaseDataGridView historyGrid = null!;
     ImageListView AvatarListView;
     public DataGridViewEx Inventory;
     public DataGridViewEx SearchGrid;
     private List<Rectangle> FrameBound = new();
     public static bool debugDraw = false;
 
+
+    private void RefreshEquippedItemBorders()
+    {
+        equippedItemLookup.ReplaceWith(Player.EqpList);
+
+        foreach (ImageListView? imageGrid in ImageGrids)
+        {
+            imageGrid?.Invalidate();
+        }
+    }
+
+    private void InitializeHistoryTab()
+    {
+        historyTabPage = new TabPage("History")
+        {
+            UseVisualStyleBackColor = true,
+        };
+        tabControl1.TabPages.Insert(1, historyTabPage);
+
+        var clearButton = new System.Windows.Forms.Button
+        {
+            Text = "Clear History",
+            Location = new Point(6, 6),
+            Size = new System.Drawing.Size(110, 31),
+        };
+        clearButton.Click += (_, _) =>
+        {
+            itemHistory.Clear();
+            historyDisplayCache.Clear();
+            RefreshHistoryGrid();
+        };
+
+        historyGrid = new BaseDataGridView(90, 600, IconGrid: true)
+        {
+            Location = new Point(3, 43),
+            Size = new System.Drawing.Size(786, 624),
+            Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
+        };
+        historyGrid.Columns[2].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        historyGrid.RowTemplate.Height = 45;
+        AvatarInventoryStyle.Apply(historyGrid);
+        historyGrid.CellClick += HistoryGrid_CellClick;
+
+        historyTabPage.Controls.Add(clearButton);
+        historyTabPage.Controls.Add(historyGrid);
+    }
+
+    private bool TryResolveHistoryDisplay(string itemId, out Bitmap icon, out string name)
+    {
+        icon = null!;
+        name = string.Empty;
+
+        try
+        {
+            string dir = Equip.GetDir(itemId);
+            if (Wz.HasNode("String/Eqp.img"))
+            {
+                name = Wz.GetNodeA("String/Eqp.img/Eqp").GetStr(dir + itemId.IntID() + "/name");
+            }
+            else if (Wz.HasNode("String/Item.img/Eqp"))
+            {
+                name = Wz.GetNodeA("String/Item.img/Eqp").GetStr(dir + itemId.IntID() + "/name");
+            }
+
+            Wz_Node entry = Wz.GetNodeA("Character/" + dir + itemId + ".img");
+            if (entry is null)
+            {
+                return false;
+            }
+
+            icon = Equip.GetPart(itemId) switch
+            {
+                PartName.Head => entry.GetBmp("front/head"),
+                PartName.Body => entry.GetBmp("stand1/0/body"),
+                PartName.Hair => entry.GetBmp("default/hairOverHead"),
+                PartName.Face => entry.GetBmp("default/face"),
+                _ => entry.GetBmp("info/icon"),
+            };
+            return icon is not null;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"History item skipped: {itemId}: {ex.Message}");
+            return false;
+        }
+    }
+
+    private void RefreshHistoryGrid()
+    {
+        historyGrid.Rows.Clear();
+        var currentIds = itemHistory.Items.ToHashSet(StringComparer.Ordinal);
+        foreach (string staleId in historyDisplayCache.Keys.Where(id => !currentIds.Contains(id)).ToArray())
+        {
+            historyDisplayCache.Remove(staleId);
+        }
+
+        foreach (string itemId in itemHistory.Items)
+        {
+            if (!historyDisplayCache.TryGetValue(itemId, out var display))
+            {
+                if (!TryResolveHistoryDisplay(itemId, out Bitmap icon, out string name))
+                {
+                    continue;
+                }
+
+                display = (icon, name);
+                historyDisplayCache[itemId] = display;
+            }
+
+            historyGrid.Rows.Add(itemId, display.Icon, display.Name);
+        }
+    }
+
+    private void EquipSelectedItem(string itemId)
+    {
+        AddEqps(itemId);
+        AddInventory();
+        Game.Player.RemoveSprites();
+        foreach (string equippedId in Player.EqpList)
+        {
+            Game.Player.Spawn(equippedId);
+        }
+        ResetDye2();
+
+        itemHistory.Add(itemId);
+        RefreshHistoryGrid();
+    }
+
+    private void HistoryGrid_CellClick(object? sender, DataGridViewCellEventArgs e)
+    {
+        if (e.RowIndex < 0)
+        {
+            return;
+        }
+
+        string? itemId = historyGrid.Rows[e.RowIndex].Cells[0].Value?.ToString();
+        if (!string.IsNullOrEmpty(itemId))
+        {
+            EquipSelectedItem(itemId);
+        }
+    }
 
     void AddInventory()
     {
@@ -179,6 +326,8 @@ public partial class AvatarForm : Form
             Inventory.Rows[0].Cells[3].Style = dataGridViewCellStyle2;
             Inventory.Rows[1].Cells[3].Style = dataGridViewCellStyle2;
         }
+
+        RefreshEquippedItemBorders();
     }
 
     void AddEqps(string EqpID)
@@ -295,32 +444,27 @@ public partial class AvatarForm : Form
         {
             this.Hide();
             e1.Cancel = true;
-            Sound.isMute = false;
             ChangeExpressionListBox = false;
         };
 
         for (int i = 1; i <= 20; i++)
         {
             ImageGrids[i] = new ImageListView();
-            ImageGrids[i].Parent = tabControl1.TabPages[0];
+            ImageGrids[i].Parent = tabPage1;
             ImageGrids[i].Anchor = (AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top | AnchorStyles.Bottom);
             ImageGrids[i].Dock = DockStyle.Fill;
-            ImageGrids[i].BackColor = SystemColors.Window;
-            ImageGrids[i].Colors.BackColor = SystemColors.ButtonFace;
-            ImageGrids[i].Colors.SelectedBorderColor = Color.Red;
+            ImageGrids[i].BackColor = AvatarItemPalette.CanvasBackground;
+            ImageGrids[i].Colors.ControlBackColor = AvatarItemPalette.CanvasBackground;
+            ImageGrids[i].Colors.BackColor = AvatarItemPalette.ItemBackground;
+            ImageGrids[i].Colors.AlternateBackColor = AvatarItemPalette.ItemBackground;
+            ImageGrids[i].Colors.SelectedBorderColor = AvatarItemPalette.SelectedBorder;
+            ImageGrids[i].SetRenderer(new AvatarItemRenderer(equippedItemLookup), true);
 
             ImageGrids[i].BorderStyle = BorderStyle.Fixed3D;
             ImageGrids[i].ThumbnailSize = new System.Drawing.Size(32, 32);
             ImageGrids[i].ItemClick += (o, e) =>
             {
-                AddEqps(e.Item.FileName);
-                AddInventory();
-                Game.Player.RemoveSprites();
-                for (int i = 0; i < Player.EqpList.Count; i++)
-                {
-                    Game.Player.Spawn(Player.EqpList[i]);
-                }
-                ResetDye2();
+                EquipSelectedItem(e.Item.FileName);
             };
             ImageGrids[i].ItemHover += (o, e) =>
             {
@@ -337,7 +481,7 @@ public partial class AvatarForm : Form
         }
 
         AvatarListView = new ImageListView();
-        AvatarListView.Parent = tabControl1.TabPages[1];
+        AvatarListView.Parent = tabPage2;
         AvatarListView.Anchor = (AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top | AnchorStyles.Bottom);
         AvatarListView.Dock = DockStyle.Fill;
         AvatarListView.BackColor = SystemColors.Window;
@@ -350,9 +494,8 @@ public partial class AvatarForm : Form
         AvatarListView.ItemClick += (o, e) =>
         {
             ResetDye2();
-            switch (tabControl1.SelectedIndex)
+            if (tabControl1.SelectedTab == tabPage2)
             {
-                case 1:
                     foreach (var Iter in ItemEffect.UseList.Keys)
                         ItemEffect.UseList[Iter].Dead();
                     ItemEffect.UseList.Clear();
@@ -366,25 +509,48 @@ public partial class AvatarForm : Form
                     Game.Player.DressCap = false;
                     Game.Player.RemoveSprites();
 
+                    var equipmentResolver = new AvatarEquipmentResolver(Wz.GetNodeA);
+                    var missingEquipment = new List<AvatarEquipmentResolution>();
                     string[] Split = e.Item.FileName.Split("-");
                     var EqpList = Split.ToList();
                     EqpList.Sort();
                     for (int i = 1; i < EqpList.Count; i++)
                     {
+                        var resolution = equipmentResolver.Resolve(EqpList[i]);
+                        if (!resolution.IsAvailable)
+                        {
+                            missingEquipment.Add(resolution);
+                            continue;
+                        }
+
                         AddEqps(EqpList[i]);
                         Game.Player.Spawn(EqpList[i]);
                     }
                     AddInventory();
 
+                    if (missingEquipment.Count > 0)
+                    {
+                        string missingLines = string.Join(
+                            Environment.NewLine,
+                            missingEquipment.Select(item => $"{item.EquipmentId}: {item.WzPath}"));
+
+                        MessageBox.Show(
+                            this,
+                            "目前 WZ 中找不到以下裝備，已略過：" +
+                            Environment.NewLine + Environment.NewLine + missingLines,
+                            "缺少裝備資料",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Warning);
+                    }
+
                     tabControl1.Enabled = false;
                     timer1.Enabled = true;
                     label9.Visible = true;
-
-                    break;
-                case 5:
-                    string IDs = e.Item.FileName;
-                    PlayerEx.Spawn(IDs);
-                    break;
+            }
+            else if (tabControl1.SelectedTab == tabPage5)
+            {
+                string IDs = e.Item.FileName;
+                PlayerEx.Spawn(IDs);
             }
         };
 
@@ -394,8 +560,7 @@ public partial class AvatarForm : Form
         Inventory.Columns[2].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
         Inventory.DefaultCellStyle.Font = new Font("Tahoma", 15, GraphicsUnit.Pixel);
         Inventory.Anchor = (AnchorStyles.Right | AnchorStyles.Top | AnchorStyles.Bottom);
-        Inventory.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.White;
-        Inventory.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black;
+        AvatarInventoryStyle.Apply(Inventory);
         Inventory.CellContentClick += (s, e) =>
         {
             if (e.ColumnIndex != 3)
@@ -404,6 +569,7 @@ public partial class AvatarForm : Form
             var Part = Equip.GetPart(Player.EqpList[Row]);
             string DeleteID = Player.EqpList[Row];
             Player.EqpList.RemoveAt(Row);
+            RefreshEquippedItemBorders();
 
             if (ItemEffect.AllList.Contains(DeleteID))
                 ItemEffect.Remove(DeleteID);
@@ -428,9 +594,9 @@ public partial class AvatarForm : Form
                 Game.Player.Spawn(Player.EqpList[i]);
             }
 
-            if (tabControl1.SelectedIndex == 2)
+            if (tabControl1.SelectedTab == tabPage3)
                 ResetDyeGrid();
-            if (tabControl1.SelectedIndex == 3)
+            if (tabControl1.SelectedTab == tabPage7)
                 ResetDyeGrid2();
             ResetDye2();
 
@@ -484,12 +650,20 @@ public partial class AvatarForm : Form
 
 
     List<string> PartList = new();
+    private System.Windows.Forms.Button? selectedPartButton;
+    private bool keepCurrentTabWhenLoadingPart;
+
     private void button1_Click(object sender, EventArgs e)
     {
+        System.Windows.Forms.Button partButton = (System.Windows.Forms.Button)sender;
+        selectedPartButton = partButton;
         MainForm.Instance.ToolTipView.Visible = false;
-        tabControl1.SelectedIndex = 0;
+        if (!keepCurrentTabWhenLoadingPart)
+        {
+            tabControl1.SelectedIndex = 0;
+        }
         string CharacterDir = "";
-        string ButtonText = ((System.Windows.Forms.Button)sender).Text.Trim(' ');
+        string ButtonText = partButton.Text.Trim(' ');
 
         switch (ButtonText)
         {
@@ -522,7 +696,7 @@ public partial class AvatarForm : Form
                 CharacterDir = ButtonText;
                 break;
         }
-        int PartIndex = ((System.Windows.Forms.Button)sender).Tag.ToString().ToInt();
+        int PartIndex = partButton.Tag.ToString().ToInt();
         for (int i = 1; i <= 20; i++)
             ImageGrids[i].Visible = false;
         ImageGrids[PartIndex].Visible = true;
@@ -548,6 +722,9 @@ public partial class AvatarForm : Form
 
             int Num = 0;
             bool InRange(int Low, int High) => (Num >= Low) && (Num <= High);
+            var nodeResolver = new AvatarPartNodeResolver(
+                Wz.GetNodeA,
+                missingPath => Debug.WriteLine($"Avatar category skipped missing WZ node: {missingPath}"));
 
             Win32.SendMessage(ImageGrids[PartIndex].Handle, false);
             foreach (var img in Dir)
@@ -566,7 +743,25 @@ public partial class AvatarForm : Form
                         break;
                 }
 
-                foreach (var Iter in Wz.GetNodeA(Path + img.Text).Nodes)
+                string itemId = img.ImgID();
+                string itemPath = Path + img.Text;
+                Wz_Node[] itemChildren = nodeResolver.GetChildren(itemPath).ToArray();
+                Wz_Node? infoNode = itemChildren.FirstOrDefault(node => node.Text == "info");
+                int? cashValue = infoNode?.Nodes["cash"]?.GetValueEx<int>(0);
+                if (!AvatarCashFilter.ShouldIncludeAvatarItem(
+                        CashOnlyCheckBox.Checked,
+                        cashValue,
+                        itemId))
+                {
+                    continue;
+                }
+
+                if (!AvatarGenderFilter.ShouldInclude(SelectedGenderFilter, itemId))
+                {
+                    continue;
+                }
+
+                foreach (Wz_Node Iter in itemChildren)
                 {
                     string Left4() => Iter.ImgName().LeftStr(4);
                     Num = Iter.ImgID().ToInt() / 1000;
@@ -679,6 +874,48 @@ public partial class AvatarForm : Form
         Png.Dispose();
     }
 
+    private void ResetPartCategoryViews()
+    {
+        for (int i = 1; i <= 20; i++)
+        {
+            ImageGrids[i].Items.Clear();
+        }
+
+        PartList.Clear();
+        if (selectedPartButton is not null)
+        {
+            keepCurrentTabWhenLoadingPart = true;
+            try
+            {
+                button1_Click(selectedPartButton, EventArgs.Empty);
+            }
+            finally
+            {
+                keepCurrentTabWhenLoadingPart = false;
+            }
+        }
+    }
+
+    private void CashOnlyCheckBox_CheckedChanged(object sender, EventArgs e)
+    {
+        ResetPartCategoryViews();
+        RefreshSearchGridForFilters();
+    }
+
+    private AvatarGenderSelection SelectedGenderFilter =>
+        GenderFilterComboBox.SelectedIndex switch
+        {
+            1 => AvatarGenderSelection.Male,
+            2 => AvatarGenderSelection.Female,
+            _ => AvatarGenderSelection.All
+        };
+
+    private void GenderFilterComboBox_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        ResetPartCategoryViews();
+        RefreshSearchGridForFilters();
+    }
+
     static bool Loaded;
     static bool SearchGridLoaded;
 
@@ -686,10 +923,20 @@ public partial class AvatarForm : Form
     {
         if (Node.Text == "name")
         {
-            if (Node.ParentNode.Text.Length == 5)
-                SearchGrid.Rows.Add("000" + Node.ParentNode.Text, " " + Node.ToStr());
-            else
-                SearchGrid.Rows.Add("0" + Node.ParentNode.Text, " " + Node.ToStr());
+            string itemId = Node.ParentNode.Text.Length == 5
+                ? "000" + Node.ParentNode.Text
+                : "0" + Node.ParentNode.Text;
+            int? cashValue = CashOnlyCheckBox.Checked
+                ? GetCharacterCashValue(itemId)
+                : null;
+            if (AvatarCashFilter.ShouldIncludeAvatarItem(
+                    CashOnlyCheckBox.Checked,
+                    cashValue,
+                    itemId)
+                && AvatarGenderFilter.ShouldInclude(SelectedGenderFilter, itemId))
+            {
+                SearchGrid.Rows.Add(itemId, " " + Node.ToStr());
+            }
         }
         foreach (var Iter in Node.Nodes)
         {
@@ -700,6 +947,45 @@ public partial class AvatarForm : Form
              (Node.Text.LeftStr(3) != "111") && (Node.Text.LeftStr(3) != "112") && (Node.Text.LeftStr(3) != "114"))
                 DumpEqpString(Iter);
         }
+    }
+
+    private static int? GetCharacterCashValue(string itemId)
+    {
+        Wz_Node? itemNode = Wz.GetNodeByID(itemId, WzType.Character);
+        return itemNode?.GetNode("info/cash")?.GetValueEx<int>(0);
+    }
+
+    private void PopulateSearchGrid()
+    {
+        SearchGrid.Rows.Clear();
+        SearchGrid.SearchGrid.Rows.Clear();
+        Win32.SendMessage(SearchGrid.Handle, false);
+
+        if (!Wz.HasHardCodedStrings)
+        {
+            if (Wz.HasNode("String/Eqp.img"))
+            {
+                DumpEqpString(Wz.GetNodeA("String/Eqp.img/Eqp"));
+            }
+            else
+            {
+                DumpEqpString(Wz.GetNodeA("String/Item.img/Eqp"));
+            }
+        }
+
+        Win32.SendMessage(SearchGrid.Handle, true);
+        SearchGrid.Refresh();
+    }
+
+    private void RefreshSearchGridForFilters()
+    {
+        if (!SearchGridLoaded || SearchGrid is null)
+        {
+            return;
+        }
+
+        PopulateSearchGrid();
+        SearchGrid.Search(textBox1.Text);
     }
 
     void CellClick(BaseDataGridView DataGrid, DataGridViewCellEventArgs e)
@@ -735,7 +1021,7 @@ public partial class AvatarForm : Form
     }
     private void tabControl1_SelectedIndexChanged(object sender, EventArgs e)
     {
-        if (tabControl1.SelectedIndex != 0)
+        if (tabControl1.SelectedTab != tabPage1)
             MainForm.Instance.ToolTipView.Visible = false;
 
         void LoadAvatarPics()
@@ -752,10 +1038,9 @@ public partial class AvatarForm : Form
             }
         }
 
-        Sound.isMute = false;
-        switch (tabControl1.SelectedIndex)
+        switch (tabControl1.SelectedTab)
         {
-            case 0:
+            case { } when tabControl1.SelectedTab == tabPage1:
 
                 if (MainForm.Instance.ToolTipView.Parent != null)
                 {
@@ -770,30 +1055,33 @@ public partial class AvatarForm : Form
                 }
                 SelectedFrame = false;
                 break;
-            case 1:
+            case { } when tabControl1.SelectedTab == historyTabPage:
+                SelectedFrame = false;
+                break;
+            case { } when tabControl1.SelectedTab == tabPage2:
                 if (!Loaded)
                 {
                     LoadAvatarPics();
                     Loaded = true;
                 }
-                AvatarListView.Parent = tabControl1.TabPages[1];
+                AvatarListView.Parent = tabPage2;
                 SelectedFrame = false;
                 timer1.Enabled = true;
                 break;
-            case 2:
+            case { } when tabControl1.SelectedTab == tabPage3:
                 ResetDyeGrid();
 
                 SelectedFrame = false;
                 break;
 
-            case 3:
+            case { } when tabControl1.SelectedTab == tabPage7:
                 ResetDyeGrid2();
                 SelectedFrame = false;
                 break;
-            case 4:
+            case { } when tabControl1.SelectedTab == tabPage4:
                 if (!SearchGridLoaded)
                 {
-                    SearchGrid = new(60, 184, 114, 109, 315, 400, false, tabControl1.TabPages[4]);
+                    SearchGrid = new(60, 184, 114, 109, 315, 400, false, tabPage4);
                     SearchGrid.CellClick += (s, e) =>
                     {
                         CellClick(SearchGrid, e);
@@ -855,23 +1143,13 @@ public partial class AvatarForm : Form
                         }
                     };
 
-                    var Graphic = SearchGrid.CreateGraphics();
-                    var Font = new System.Drawing.Font(FontFamily.GenericSansSerif, 20, FontStyle.Bold);
-                    Graphic.DrawString("Loading...", Font, Brushes.Black, 10, 50);
-
-                    string ID = null;
-                    string name = null;
-                    Win32.SendMessage(SearchGrid.Handle, false);
-
-                    if (!Wz.HasHardCodedStrings)
+                    using (Graphics graphic = SearchGrid.CreateGraphics())
+                    using (var font = new System.Drawing.Font(FontFamily.GenericSansSerif, 20, FontStyle.Bold))
                     {
-                        if (Wz.HasNode("String/Eqp.img"))
-                            DumpEqpString(Wz.GetNodeA("String/Eqp.img/Eqp"));
-                        else
-                            DumpEqpString(Wz.GetNodeA("String/Item.img/Eqp"));
+                        graphic.DrawString("Loading...", font, Brushes.Black, 10, 50);
                     }
-                    Win32.SendMessage(SearchGrid.Handle, true);
-                    SearchGrid.Refresh();
+
+                    PopulateSearchGrid();
                     SearchGridLoaded = true;
                 }
                 // MainForm.Instance.ToolTipView.TopLevel = false;
@@ -880,17 +1158,17 @@ public partial class AvatarForm : Form
                 SelectedFrame = false;
                 break;
 
-            case 5:
+            case { } when tabControl1.SelectedTab == tabPage5:
                 if (!Loaded)
                 {
                     LoadAvatarPics();
                     Loaded = true;
                 }
-                AvatarListView.Parent = tabControl1.TabPages[5];
+                AvatarListView.Parent = tabPage5;
                 SelectedFrame = false;
                 break;
 
-            case 6:
+            case { } when tabControl1.SelectedTab == tabPage6:
                 if (!LoadedFrameList)
                 {
                     foreach (var i in AllFrames)
@@ -965,14 +1243,7 @@ public partial class AvatarForm : Form
     {
         if (label1.Text == "")
             return;
-        AddEqps(label1.Text);
-        AddInventory();
-        Game.Player.RemoveSprites();
-        for (int i = 0; i < Player.EqpList.Count; i++)
-        {
-            Game.Player.Spawn(Player.EqpList[i]);
-        }
-        ResetDye2();
+        EquipSelectedItem(label1.Text);
     }
 
     private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
@@ -1417,7 +1688,7 @@ public partial class AvatarForm : Form
             timer1.Enabled = false;
             label9.Visible = false;
 
-            if (tabControl1.SelectedIndex == 6)
+            if (tabControl1.SelectedTab == tabPage6)
             {
                 FrameListBox_SelectedIndexChanged(sender, e);
             }

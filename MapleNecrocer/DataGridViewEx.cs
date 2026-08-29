@@ -95,10 +95,6 @@ public class DataGridViewEx : BaseDataGridView
     }
     public BaseDataGridView SearchGrid;
 
-    string Trim(string s)
-    {
-        return s.Trim(' ');
-    }
     public void Search(string Text)
     {
         foreach (DataGridViewRow i in SearchGrid.Rows)
@@ -107,8 +103,8 @@ public class DataGridViewEx : BaseDataGridView
                 i.Dispose();
         }
 
-        var SearchStr = Trim(Text);
-        if (SearchStr == "")
+        IReadOnlyList<string> searchCandidates = ChineseSearchQuery.CreateCandidates(Text);
+        if (searchCandidates.Count == 0)
         {
             this.Visible = true;
             SearchGrid.Visible = false;
@@ -122,16 +118,14 @@ public class DataGridViewEx : BaseDataGridView
             {
                 for (int j = 0; j < this.Columns.Count; j++)
                 {
-                    if (this.Rows[i].Cells[j].Value is string)
+                    if (this.Rows[i].Cells[j].Value is string cellText &&
+                        ChineseSearchQuery.ContainsAny(cellText, searchCandidates))
                     {
-                        if (this.Rows[i].Cells[j].Value.ToString().IndexOf(SearchStr, StringComparison.OrdinalIgnoreCase) >= 0)
-                        {
-                            Row = (DataGridViewRow)this.Rows[i].Clone();
-                            for (int j2 = 0; j2 < this.Columns.Count; j2++)
-                                Row.Cells[j2].Value = this.Rows[i].Cells[j2].Value;
-                            SearchGrid.Rows.Add(Row);
-                            break;
-                        }
+                        Row = (DataGridViewRow)this.Rows[i].Clone();
+                        for (int j2 = 0; j2 < this.Columns.Count; j2++)
+                            Row.Cells[j2].Value = this.Rows[i].Cells[j2].Value;
+                        SearchGrid.Rows.Add(Row);
+                        break;
                     }
                 }
             }
