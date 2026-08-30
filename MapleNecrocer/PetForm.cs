@@ -11,7 +11,7 @@ using System.Windows.Forms;
 
 namespace MapleNecrocer;
 
-public partial class PetForm : Form
+public partial class PetForm : ThemedForm
 {
     public PetForm()
     {

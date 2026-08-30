@@ -10,7 +10,7 @@ using System.Windows.Forms;
 
 namespace MapleNecrocer;
 
-public partial class TotemEffectForm : Form
+public partial class TotemEffectForm : ThemedForm
 {
     public TotemEffectForm()
     {

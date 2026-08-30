@@ -1,7 +1,7 @@
 ﻿
 namespace MapleNecrocer;
 
-public partial class FamiliarForm : Form
+public partial class FamiliarForm : ThemedForm
 {
     public FamiliarForm()
     {

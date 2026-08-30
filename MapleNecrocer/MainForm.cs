@@ -34,7 +34,7 @@ using System.Diagnostics;
 namespace MapleNecrocer;
 
 
-public partial class MainForm : Form
+public partial class MainForm : ThemedForm
 {
     internal const string StartupMapId = "270000200";
 

@@ -15,7 +15,7 @@ using WzComparerR2.WzLib;
 
 namespace MapleNecrocer;
 
-public partial class ConsumeForm : Form
+public partial class ConsumeForm : ThemedForm
 {
     public ConsumeForm()
     {

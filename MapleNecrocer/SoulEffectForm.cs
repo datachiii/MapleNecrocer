@@ -10,7 +10,7 @@ using System.Windows.Forms;
 
 namespace MapleNecrocer;
 
-public partial class SoulEffectForm : Form
+public partial class SoulEffectForm : ThemedForm
 {
     public SoulEffectForm()
     {

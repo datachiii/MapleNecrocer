@@ -10,7 +10,7 @@ using System.Windows.Forms;
 
 namespace MapleNecrocer;
 
-public partial class TitleForm : Form
+public partial class TitleForm : ThemedForm
 {
     public TitleForm()
     {

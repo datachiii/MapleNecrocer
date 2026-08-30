@@ -10,7 +10,7 @@ using System.Windows.Forms;
 
 namespace MapleNecrocer;
 
-public partial class EffectRingForm : Form
+public partial class EffectRingForm : ThemedForm
 {
     public EffectRingForm()
     {

@@ -10,8 +10,10 @@ using System.Windows.Forms;
 
 namespace MapleNecrocer;
 
-public partial class OptionForm : Form
+public partial class OptionForm : ThemedForm
 {
+    private bool synchronizingOptions;
+
     public OptionForm()
     {
         InitializeComponent();
@@ -20,6 +22,11 @@ public partial class OptionForm : Form
     public static OptionForm Instance;
     private void checkBox1_CheckedChanged(object sender, EventArgs e)
     {
+        if (synchronizingOptions)
+        {
+            return;
+        }
+
         if (checkBox1.Checked)
         {
             Sound.isMute = true;
@@ -34,12 +41,33 @@ public partial class OptionForm : Form
 
     private void OptionForm_Shown(object sender, EventArgs e)
     {
-        checkBox1.Checked = Sound.isMute;
+        synchronizingOptions = true;
+        try
+        {
+            darkModeCheckBox.Checked = ThemeManager.CurrentMode == ThemeMode.Dark;
+            checkBox1.Checked = Sound.isMute;
+        }
+        finally
+        {
+            synchronizingOptions = false;
+        }
+
         this.FormClosing += (s, e1) =>
         {
             this.Hide();
             e1.Cancel = true;
         };
+    }
+
+    private void darkModeCheckBox_CheckedChanged(object sender, EventArgs e)
+    {
+        if (synchronizingOptions)
+        {
+            return;
+        }
+
+        ThemeManager.SetMode(
+            darkModeCheckBox.Checked ? ThemeMode.Dark : ThemeMode.Light);
     }
 
     private void OptionForm_KeyDown(object sender, KeyEventArgs e)

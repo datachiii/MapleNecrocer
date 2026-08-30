@@ -141,7 +141,7 @@ public class DataGridViewEx : BaseDataGridView
         {
             if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
             {
-              this.Rows[e.RowIndex].DefaultCellStyle.BackColor = Color.LightCyan; 
+                GridHoverStyle.ApplyEnter(this.Rows[e.RowIndex]);
             }
             this.Refresh();
             string ID = this.Rows[e.RowIndex].Cells[0].Value.ToString();
@@ -153,9 +153,9 @@ public class DataGridViewEx : BaseDataGridView
 
         this.CellMouseLeave += (s, e) =>
         {
-           if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
+            if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
             {
-                this.Rows[e.RowIndex].DefaultCellStyle.BackColor = Color.White;
+                GridHoverStyle.ApplyLeave(this.Rows[e.RowIndex]);
             }
            
         };
@@ -164,7 +164,7 @@ public class DataGridViewEx : BaseDataGridView
         {
             if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
             {
-                this.SearchGrid.Rows[e.RowIndex].DefaultCellStyle.BackColor = Color.LightCyan;
+                GridHoverStyle.ApplyEnter(this.SearchGrid.Rows[e.RowIndex]);
             }
             this.Refresh();
             string ID = this.SearchGrid.Rows[e.RowIndex].Cells[0].Value.ToString();
@@ -177,7 +177,7 @@ public class DataGridViewEx : BaseDataGridView
         {
             if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
             {
-                this.SearchGrid.Rows[e.RowIndex].DefaultCellStyle.BackColor = Color.White;
+                GridHoverStyle.ApplyLeave(this.SearchGrid.Rows[e.RowIndex]);
             }
         };
     }

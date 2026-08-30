@@ -1,7 +1,7 @@
 ﻿using WzComparerR2.WzLib;
 namespace MapleNecrocer;
 
-public partial class RingForm : Form
+public partial class RingForm : ThemedForm
 {
     public RingForm()
     {

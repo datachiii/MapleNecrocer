@@ -12,7 +12,7 @@ using WzComparerR2.CharaSim;
 
 namespace MapleNecrocer;
 
-public partial class MountForm : Form
+public partial class MountForm : ThemedForm
 {
     public MountForm()
     {

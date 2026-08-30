@@ -12,7 +12,7 @@ using WzComparerR2.CharaSim;
 
 namespace MapleNecrocer;
 
-public partial class CashEffectForm : Form
+public partial class CashEffectForm : ThemedForm
 {
     public CashEffectForm()
     {

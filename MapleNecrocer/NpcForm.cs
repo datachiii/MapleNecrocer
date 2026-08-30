@@ -4,7 +4,7 @@ using System.Windows.Forms;
 
 namespace MapleNecrocer;
 
-public partial class NpcForm : Form
+public partial class NpcForm : ThemedForm
 {
     public NpcForm()
     {

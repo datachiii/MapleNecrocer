@@ -13,7 +13,7 @@ using WzComparerR2.WzLib;
 
 namespace MapleNecrocer;
 
-public partial class MobForm : Form
+public partial class MobForm : ThemedForm
 {
     public MobForm()
     {

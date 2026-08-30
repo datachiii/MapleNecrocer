@@ -27,7 +27,7 @@ using System.Reflection;
 
 namespace MapleNecrocer;
 
-public partial class AvatarForm : Form
+public partial class AvatarForm : ThemedForm
 {
     public AvatarForm()
     {
@@ -39,6 +39,7 @@ public partial class AvatarForm : Form
         AvatarFormDraw.Top = 12;
         AvatarFormDraw.Parent = this;
         AvatarFormDraw.Anchor = (AnchorStyles.Right | AnchorStyles.Top);
+        AvatarSearchStyle.ApplyPreviewSurface(AvatarFormDraw, ThemeManager.CurrentMode);
 
         FrameListDraw = new();
         FrameListDraw.Width = 512;
@@ -104,7 +105,7 @@ public partial class AvatarForm : Form
     public static Rectangle AvatarBound;
     public static Rectangle CurrentSpriteBound;
 
-    static bool ShowToolTip = true;
+    static bool ShowToolTip = false;
     ImageListView[] ImageGrids = new ImageListView[21];
     private readonly AvatarEquippedItemLookup equippedItemLookup = new();
     private readonly AvatarItemHistory itemHistory = new();
@@ -453,11 +454,7 @@ public partial class AvatarForm : Form
             ImageGrids[i].Parent = tabPage1;
             ImageGrids[i].Anchor = (AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top | AnchorStyles.Bottom);
             ImageGrids[i].Dock = DockStyle.Fill;
-            ImageGrids[i].BackColor = AvatarItemPalette.CanvasBackground;
-            ImageGrids[i].Colors.ControlBackColor = AvatarItemPalette.CanvasBackground;
-            ImageGrids[i].Colors.BackColor = AvatarItemPalette.ItemBackground;
-            ImageGrids[i].Colors.AlternateBackColor = AvatarItemPalette.ItemBackground;
-            ImageGrids[i].Colors.SelectedBorderColor = AvatarItemPalette.SelectedBorder;
+            AvatarItemBrowserStyle.Apply(ImageGrids[i], ThemeManager.CurrentMode);
             ImageGrids[i].SetRenderer(new AvatarItemRenderer(equippedItemLookup), true);
 
             ImageGrids[i].BorderStyle = BorderStyle.Fixed3D;
@@ -484,11 +481,7 @@ public partial class AvatarForm : Form
         AvatarListView.Parent = tabPage2;
         AvatarListView.Anchor = (AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top | AnchorStyles.Bottom);
         AvatarListView.Dock = DockStyle.Fill;
-        AvatarListView.BackColor = SystemColors.Window;
-        AvatarListView.Colors.BackColor = SystemColors.ButtonFace;
-        AvatarListView.Colors.SelectedBorderColor = Color.Red;
-        AvatarListView.Colors.HoverColor1 = SystemColors.ButtonFace;
-        AvatarListView.Colors.HoverColor2 = SystemColors.ButtonFace;
+        AvatarItemBrowserStyle.Apply(AvatarListView, ThemeManager.CurrentMode);
         AvatarListView.BorderStyle = BorderStyle.Fixed3D;
         AvatarListView.ThumbnailSize = new System.Drawing.Size(100, 100);
         AvatarListView.ItemClick += (o, e) =>
@@ -1097,8 +1090,7 @@ public partial class AvatarForm : Form
                     {
                         if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
                         {
-                            SearchGrid[0, e.RowIndex].Style.BackColor = Color.LightCyan;
-                            SearchGrid[1, e.RowIndex].Style.BackColor = Color.LightCyan;
+                            GridHoverStyle.ApplyEnter(SearchGrid.Rows[e.RowIndex]);
                         }
                         if (ShowToolTip)
                         {
@@ -1113,8 +1105,7 @@ public partial class AvatarForm : Form
                     {
                         if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
                         {
-                            SearchGrid[0, e.RowIndex].Style.BackColor = Color.White;
-                            SearchGrid[1, e.RowIndex].Style.BackColor = Color.White;
+                            GridHoverStyle.ApplyLeave(SearchGrid.Rows[e.RowIndex]);
                         }
                     };
 
@@ -1122,8 +1113,7 @@ public partial class AvatarForm : Form
                     {
                         if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
                         {
-                            SearchGrid.SearchGrid[0, e.RowIndex].Style.BackColor = Color.LightCyan;
-                            SearchGrid.SearchGrid[1, e.RowIndex].Style.BackColor = Color.LightCyan;
+                            GridHoverStyle.ApplyEnter(SearchGrid.SearchGrid.Rows[e.RowIndex]);
                         }
                         if (ShowToolTip)
                         {
@@ -1138,8 +1128,7 @@ public partial class AvatarForm : Form
                     {
                         if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
                         {
-                            SearchGrid.SearchGrid[0, e.RowIndex].Style.BackColor = Color.White;
-                            SearchGrid.SearchGrid[1, e.RowIndex].Style.BackColor = Color.White;
+                            GridHoverStyle.ApplyLeave(SearchGrid.SearchGrid.Rows[e.RowIndex]);
                         }
                     };
 
@@ -1253,7 +1242,7 @@ public partial class AvatarForm : Form
 
     private void ShowToolTil_CheckBox_CheckedChanged(object sender, EventArgs e)
     {
-        ShowToolTip = !ShowToolTip;
+        ShowToolTip = ShowToolTil_CheckBox.Checked;
         MainForm.Instance.ToolTipView.Visible = ShowToolTip;
     }
 

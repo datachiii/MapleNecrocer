@@ -13,7 +13,7 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
 
 namespace MapleNecrocer;
 
-public partial class SelectFolderForm : Form
+public partial class SelectFolderForm : ThemedForm
 {
     public SelectFolderForm()
     {

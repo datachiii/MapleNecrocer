@@ -31,6 +31,11 @@ public class AvatarFormDraw : MonoGameControl
 
         base.Initialize();
         this.AlwaysEnableKeyboardInput = true;
+        Microsoft.Xna.Framework.Color darkA = new(0x6B, 0x72, 0x7A);
+        Microsoft.Xna.Framework.Color darkB = new(0x8A, 0x91, 0x99);
+        Microsoft.Xna.Framework.Color lightA = new(205, 205, 205);
+        Microsoft.Xna.Framework.Color lightB = new(255, 255, 255);
+        bool darkMode = ThemeManager.CurrentMode == ThemeMode.Dark;
         EngineFunc.Canvas.DrawTarget(ref CheckBoardTexture, 260, 200, () =>
         {
             for (int J = 0; J < 200; J++)
@@ -40,9 +45,9 @@ public class AvatarFormDraw : MonoGameControl
                     if ((I == 0) || (J == 0) || (I == 259) || (J == 199))
                         EngineFunc.Canvas.Pixel(I, J, new Color(0, 0, 0));
                     else if (((I / 8) + (J / 8)) % 2 == 0)  // put checkboard pattern
-                        EngineFunc.Canvas.Pixel(I, J, new Color(205, 205, 205));
+                        EngineFunc.Canvas.Pixel(I, J, darkMode ? darkA : lightA);
                     else
-                        EngineFunc.Canvas.Pixel(I, J, new Color(255, 255, 255));
+                        EngineFunc.Canvas.Pixel(I, J, darkMode ? darkB : lightB);
                 }
             }
         });

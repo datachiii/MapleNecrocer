@@ -21,7 +21,7 @@ using WzComparerR2.PluginBase;
 using System.Reflection;
 namespace MapleNecrocer;
 
-public partial class RenderForm : Form
+public partial class RenderForm : ThemedForm
 {
     public RenderForm()
     {

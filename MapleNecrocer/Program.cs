@@ -5,7 +5,10 @@ using System.Runtime.InteropServices;
 namespace MapleNecrocer;
 internal static class Program
 {
-  
+    internal static void InitializeTheme(ThemePreferenceStore store)
+    {
+        ThemeManager.Initialize(store.Load(), store);
+    }
 
     ///  The main entry point for the application.
     /// </summary>
@@ -17,7 +20,9 @@ internal static class Program
         Application.SetHighDpiMode(HighDpiMode.PerMonitor);
                
         ApplicationConfiguration.Initialize();
-    
+
+        InitializeTheme(ThemePreferenceStore.CreateDefault());
+
         Application.Run(new MainForm());
     }
 }
