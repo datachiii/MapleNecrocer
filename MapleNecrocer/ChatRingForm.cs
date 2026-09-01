@@ -10,7 +10,7 @@ using System.Windows.Forms;
 
 namespace MapleNecrocer;
 
-public partial class ChatRingForm : Form
+public partial class ChatRingForm : ThemedForm
 {
     public ChatRingForm()
     {

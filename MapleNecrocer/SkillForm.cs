@@ -14,7 +14,7 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using Input = Microsoft.Xna.Framework.Input.Keys;
 namespace MapleNecrocer;
 
-public partial class SkillForm : Form
+public partial class SkillForm : ThemedForm
 {
     public SkillForm()
     {

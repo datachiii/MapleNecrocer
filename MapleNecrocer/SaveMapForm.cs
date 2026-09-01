@@ -11,7 +11,7 @@ using System.Windows.Forms;
 
 namespace MapleNecrocer;
 
-public partial class SaveMapForm : Form
+public partial class SaveMapForm : ThemedForm
 {
     public SaveMapForm()
     {

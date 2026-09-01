@@ -11,7 +11,7 @@ using System.Windows.Forms;
 using WzComparerR2.WzLib;
 namespace MapleNecrocer;
 
-public partial class DamageSkinForm : Form
+public partial class DamageSkinForm : ThemedForm
 {
     public DamageSkinForm()
     {

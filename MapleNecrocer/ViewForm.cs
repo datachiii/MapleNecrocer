@@ -10,7 +10,7 @@ using System.Windows.Forms;
 
 namespace MapleNecrocer;
 
-public partial class ViewForm : Form
+public partial class ViewForm : ThemedForm
 {
     public ViewForm()
     {

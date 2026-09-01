@@ -27,7 +27,7 @@ using System.Reflection;
 
 namespace MapleNecrocer;
 
-public partial class AvatarForm : Form
+public partial class AvatarForm : ThemedForm
 {
     public AvatarForm()
     {
@@ -39,6 +39,7 @@ public partial class AvatarForm : Form
         AvatarFormDraw.Top = 12;
         AvatarFormDraw.Parent = this;
         AvatarFormDraw.Anchor = (AnchorStyles.Right | AnchorStyles.Top);
+        AvatarSearchStyle.ApplyPreviewSurface(AvatarFormDraw, ThemeManager.CurrentMode);
 
         FrameListDraw = new();
         FrameListDraw.Width = 512;
@@ -104,11 +105,12 @@ public partial class AvatarForm : Form
     public static Rectangle AvatarBound;
     public static Rectangle CurrentSpriteBound;
 
-    static bool ShowToolTip = true;
+    static bool ShowToolTip = false;
     ImageListView[] ImageGrids = new ImageListView[21];
     private readonly AvatarEquippedItemLookup equippedItemLookup = new();
     private readonly AvatarItemHistory itemHistory = new();
     private readonly Dictionary<string, (Bitmap Icon, string Name)> historyDisplayCache = new();
+    private readonly List<AvatarSearchItem> searchItems = new();
     private TabPage historyTabPage = null!;
     private BaseDataGridView historyGrid = null!;
     ImageListView AvatarListView;
@@ -453,11 +455,7 @@ public partial class AvatarForm : Form
             ImageGrids[i].Parent = tabPage1;
             ImageGrids[i].Anchor = (AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top | AnchorStyles.Bottom);
             ImageGrids[i].Dock = DockStyle.Fill;
-            ImageGrids[i].BackColor = AvatarItemPalette.CanvasBackground;
-            ImageGrids[i].Colors.ControlBackColor = AvatarItemPalette.CanvasBackground;
-            ImageGrids[i].Colors.BackColor = AvatarItemPalette.ItemBackground;
-            ImageGrids[i].Colors.AlternateBackColor = AvatarItemPalette.ItemBackground;
-            ImageGrids[i].Colors.SelectedBorderColor = AvatarItemPalette.SelectedBorder;
+            AvatarItemBrowserStyle.Apply(ImageGrids[i], ThemeManager.CurrentMode);
             ImageGrids[i].SetRenderer(new AvatarItemRenderer(equippedItemLookup), true);
 
             ImageGrids[i].BorderStyle = BorderStyle.Fixed3D;
@@ -484,11 +482,7 @@ public partial class AvatarForm : Form
         AvatarListView.Parent = tabPage2;
         AvatarListView.Anchor = (AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top | AnchorStyles.Bottom);
         AvatarListView.Dock = DockStyle.Fill;
-        AvatarListView.BackColor = SystemColors.Window;
-        AvatarListView.Colors.BackColor = SystemColors.ButtonFace;
-        AvatarListView.Colors.SelectedBorderColor = Color.Red;
-        AvatarListView.Colors.HoverColor1 = SystemColors.ButtonFace;
-        AvatarListView.Colors.HoverColor2 = SystemColors.ButtonFace;
+        AvatarItemBrowserStyle.Apply(AvatarListView, ThemeManager.CurrentMode);
         AvatarListView.BorderStyle = BorderStyle.Fixed3D;
         AvatarListView.ThumbnailSize = new System.Drawing.Size(100, 100);
         AvatarListView.ItemClick += (o, e) =>
@@ -916,36 +910,59 @@ public partial class AvatarForm : Form
         RefreshSearchGridForFilters();
     }
 
+    private void GenderFilterComboBox_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (!AvatarGenderInputPolicy.ShouldSuppressComboBoxNavigation(e.KeyCode))
+        {
+            return;
+        }
+
+        e.SuppressKeyPress = true;
+        e.Handled = true;
+    }
+
     static bool Loaded;
     static bool SearchGridLoaded;
 
-    void DumpEqpString(Wz_Node Node)
+    private void CacheSearchItems(Wz_Node node)
     {
-        if (Node.Text == "name")
+        if (node.Text == "name")
         {
-            string itemId = Node.ParentNode.Text.Length == 5
-                ? "000" + Node.ParentNode.Text
-                : "0" + Node.ParentNode.Text;
-            int? cashValue = CashOnlyCheckBox.Checked
-                ? GetCharacterCashValue(itemId)
-                : null;
-            if (AvatarCashFilter.ShouldIncludeAvatarItem(
-                    CashOnlyCheckBox.Checked,
-                    cashValue,
-                    itemId)
-                && AvatarGenderFilter.ShouldInclude(SelectedGenderFilter, itemId))
+            string itemId = node.ParentNode.Text.Length == 5
+                ? "000" + node.ParentNode.Text
+                : "0" + node.ParentNode.Text;
+            searchItems.Add(new AvatarSearchItem(
+                itemId,
+                " " + node.ToStr(),
+                GetCharacterCashValue(itemId)));
+        }
+        foreach (Wz_Node child in node.Nodes)
+        {
+            if ((node.Text != "Android") && (node.Text != "ArcaneForce") && (node.Text != "Bits") && (node.Text != "Dragon") &&
+             (node.Text != "Mechanic") && (node.Text != "PetEquip") && (node.Text != "Skillskin") && (node.Text != "Taming") &&
+             (node.Text != "MonsterBattle") && (node.Text.LeftStr(3) != "135") && (node.Text.LeftStr(3) != "150") &&
+             (node.Text.LeftStr(3) != "151") && (node.Text.LeftStr(3) != "160") && (node.Text.LeftStr(3) != "169") &&
+             (node.Text.LeftStr(3) != "111") && (node.Text.LeftStr(3) != "112") && (node.Text.LeftStr(3) != "114"))
             {
-                SearchGrid.Rows.Add(itemId, " " + Node.ToStr());
+                CacheSearchItems(child);
             }
         }
-        foreach (var Iter in Node.Nodes)
+    }
+
+    private void EnsureSearchItemsCached()
+    {
+        if (searchItems.Count > 0 || Wz.HasHardCodedStrings)
         {
-            if ((Node.Text != "Android") && (Node.Text != "ArcaneForce") && (Node.Text != "Bits") && (Node.Text != "Dragon") &&
-             (Node.Text != "Mechanic") && (Node.Text != "PetEquip") && (Node.Text != "Skillskin") && (Node.Text != "Taming") &&
-             (Node.Text != "MonsterBattle") && (Node.Text.LeftStr(3) != "135") && (Node.Text.LeftStr(3) != "150") &&
-             (Node.Text.LeftStr(3) != "151") && (Node.Text.LeftStr(3) != "160") && (Node.Text.LeftStr(3) != "169") &&
-             (Node.Text.LeftStr(3) != "111") && (Node.Text.LeftStr(3) != "112") && (Node.Text.LeftStr(3) != "114"))
-                DumpEqpString(Iter);
+            return;
+        }
+
+        if (Wz.HasNode("String/Eqp.img"))
+        {
+            CacheSearchItems(Wz.GetNodeA("String/Eqp.img/Eqp"));
+        }
+        else
+        {
+            CacheSearchItems(Wz.GetNodeA("String/Item.img/Eqp"));
         }
     }
 
@@ -961,15 +978,15 @@ public partial class AvatarForm : Form
         SearchGrid.SearchGrid.Rows.Clear();
         Win32.SendMessage(SearchGrid.Handle, false);
 
-        if (!Wz.HasHardCodedStrings)
+        EnsureSearchItemsCached();
+        foreach (AvatarSearchItem item in searchItems)
         {
-            if (Wz.HasNode("String/Eqp.img"))
+            if (AvatarSearchResultFilter.ShouldInclude(
+                    item,
+                    CashOnlyCheckBox.Checked,
+                    SelectedGenderFilter))
             {
-                DumpEqpString(Wz.GetNodeA("String/Eqp.img/Eqp"));
-            }
-            else
-            {
-                DumpEqpString(Wz.GetNodeA("String/Item.img/Eqp"));
+                SearchGrid.Rows.Add(item.ItemId, item.Name);
             }
         }
 
@@ -1097,8 +1114,7 @@ public partial class AvatarForm : Form
                     {
                         if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
                         {
-                            SearchGrid[0, e.RowIndex].Style.BackColor = Color.LightCyan;
-                            SearchGrid[1, e.RowIndex].Style.BackColor = Color.LightCyan;
+                            GridHoverStyle.ApplyEnter(SearchGrid.Rows[e.RowIndex]);
                         }
                         if (ShowToolTip)
                         {
@@ -1113,8 +1129,7 @@ public partial class AvatarForm : Form
                     {
                         if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
                         {
-                            SearchGrid[0, e.RowIndex].Style.BackColor = Color.White;
-                            SearchGrid[1, e.RowIndex].Style.BackColor = Color.White;
+                            GridHoverStyle.ApplyLeave(SearchGrid.Rows[e.RowIndex]);
                         }
                     };
 
@@ -1122,8 +1137,7 @@ public partial class AvatarForm : Form
                     {
                         if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
                         {
-                            SearchGrid.SearchGrid[0, e.RowIndex].Style.BackColor = Color.LightCyan;
-                            SearchGrid.SearchGrid[1, e.RowIndex].Style.BackColor = Color.LightCyan;
+                            GridHoverStyle.ApplyEnter(SearchGrid.SearchGrid.Rows[e.RowIndex]);
                         }
                         if (ShowToolTip)
                         {
@@ -1138,8 +1152,7 @@ public partial class AvatarForm : Form
                     {
                         if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
                         {
-                            SearchGrid.SearchGrid[0, e.RowIndex].Style.BackColor = Color.White;
-                            SearchGrid.SearchGrid[1, e.RowIndex].Style.BackColor = Color.White;
+                            GridHoverStyle.ApplyLeave(SearchGrid.SearchGrid.Rows[e.RowIndex]);
                         }
                     };
 
@@ -1253,7 +1266,7 @@ public partial class AvatarForm : Form
 
     private void ShowToolTil_CheckBox_CheckedChanged(object sender, EventArgs e)
     {
-        ShowToolTip = !ShowToolTip;
+        ShowToolTip = ShowToolTil_CheckBox.Checked;
         MainForm.Instance.ToolTipView.Visible = ShowToolTip;
     }
 

@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             checkBox1 = new CheckBox();
+            darkModeCheckBox = new CheckBox();
             SuspendLayout();
             // 
             // checkBox1
@@ -41,11 +42,23 @@
             checkBox1.Text = "Mute";
             checkBox1.UseVisualStyleBackColor = true;
             checkBox1.CheckedChanged += checkBox1_CheckedChanged;
-            // 
+            //
+            // darkModeCheckBox
+            //
+            darkModeCheckBox.AutoSize = true;
+            darkModeCheckBox.Location = new Point(89, 84);
+            darkModeCheckBox.Name = "darkModeCheckBox";
+            darkModeCheckBox.Size = new Size(101, 22);
+            darkModeCheckBox.TabIndex = 1;
+            darkModeCheckBox.Text = "Dark Mode";
+            darkModeCheckBox.UseVisualStyleBackColor = true;
+            darkModeCheckBox.CheckedChanged += darkModeCheckBox_CheckedChanged;
+            //
             // OptionForm
-            // 
+            //
             AutoScaleMode = AutoScaleMode.None;
-            ClientSize = new Size(289, 126);
+            ClientSize = new Size(289, 155);
+            Controls.Add(darkModeCheckBox);
             Controls.Add(checkBox1);
             Font = new Font("Tahoma", 14F, FontStyle.Regular, GraphicsUnit.Pixel);
             KeyPreview = true;
@@ -64,5 +77,6 @@
         #endregion
 
         private CheckBox checkBox1;
+        private CheckBox darkModeCheckBox;
     }
 }

@@ -12,7 +12,7 @@ using WzComparerR2.WzLib;
 
 namespace MapleNecrocer;
 
-public partial class CashForm : Form
+public partial class CashForm : ThemedForm
 {
     public CashForm()
     {

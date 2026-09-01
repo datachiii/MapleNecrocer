@@ -12,7 +12,7 @@ using Color = Microsoft.Xna.Framework.Color;
 
 namespace MapleNecrocer;
 
-public partial class ScaleForm : Form
+public partial class ScaleForm : ThemedForm
 {
     public ScaleForm()
     {

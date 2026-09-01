@@ -11,7 +11,7 @@ using System.Windows.Forms;
 
 namespace MapleNecrocer;
 
-public partial class EffectForm : Form
+public partial class EffectForm : ThemedForm
 {
     public EffectForm()
     {

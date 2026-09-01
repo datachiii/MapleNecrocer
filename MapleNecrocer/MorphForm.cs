@@ -10,7 +10,7 @@ using System.Windows.Forms;
 
 namespace MapleNecrocer;
 
-public partial class MorphForm : Form
+public partial class MorphForm : ThemedForm
 {
     public MorphForm()
     {

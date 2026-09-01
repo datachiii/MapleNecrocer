@@ -5,7 +5,7 @@ using WzComparerR2.WzLib;
 
 namespace MapleNecrocer;
 
-public partial class ChairForm : Form
+public partial class ChairForm : ThemedForm
 {
     public ChairForm()
     {

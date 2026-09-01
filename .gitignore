@@ -367,3 +367,4 @@ FodyWeavers.xsd
 .dotnet-cli/
 .superpowers/
 docs
+AGENTS.md

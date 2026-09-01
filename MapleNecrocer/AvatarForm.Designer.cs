@@ -1016,8 +1016,8 @@
             // ShowToolTil_CheckBox
             // 
             ShowToolTil_CheckBox.AutoSize = true;
-            ShowToolTil_CheckBox.Checked = true;
-            ShowToolTil_CheckBox.CheckState = CheckState.Checked;
+            ShowToolTil_CheckBox.Checked = false;
+            ShowToolTil_CheckBox.CheckState = CheckState.Unchecked;
             ShowToolTil_CheckBox.Font = new Font("Tahoma", 14F, FontStyle.Regular, GraphicsUnit.Pixel);
             ShowToolTil_CheckBox.Location = new Point(358, 161);
             ShowToolTil_CheckBox.Name = "ShowToolTil_CheckBox";
@@ -1063,6 +1063,7 @@
             GenderFilterComboBox.TabIndex = 29;
             GenderFilterComboBox.SelectedIndex = 0;
             GenderFilterComboBox.SelectedIndexChanged += GenderFilterComboBox_SelectedIndexChanged;
+            GenderFilterComboBox.KeyDown += GenderFilterComboBox_KeyDown;
             // 
             // label5
             // 

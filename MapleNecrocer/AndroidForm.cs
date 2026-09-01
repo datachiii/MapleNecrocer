@@ -13,7 +13,7 @@ using System.Globalization;
 
 namespace MapleNecrocer;
 
-public partial class AndroidForm : Form
+public partial class AndroidForm : ThemedForm
 {
     public AndroidForm()
     {

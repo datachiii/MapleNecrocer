@@ -11,7 +11,7 @@ using System.Windows.Forms;
 
 namespace MapleNecrocer;
 
-public partial class MedalForm : Form
+public partial class MedalForm : ThemedForm
 {
     public MedalForm()
     {

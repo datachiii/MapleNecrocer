@@ -10,7 +10,7 @@ using System.Windows.Forms;
 
 namespace MapleNecrocer;
 
-public partial class WorldMapForm : Form
+public partial class WorldMapForm : ThemedForm
 {
     public WorldMapForm()
     {

@@ -13,7 +13,7 @@ using static System.Net.Mime.MediaTypeNames;
 
 namespace MapleNecrocer;
 
-public partial class ReactorForm : Form
+public partial class ReactorForm : ThemedForm
 {
     public ReactorForm()
     {

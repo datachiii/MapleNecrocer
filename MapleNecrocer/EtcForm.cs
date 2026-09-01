@@ -12,7 +12,7 @@ using WzComparerR2.WzLib;
 
 namespace MapleNecrocer;
 
-public partial class EtcForm : Form
+public partial class EtcForm : ThemedForm
 {
     public EtcForm()
     {
