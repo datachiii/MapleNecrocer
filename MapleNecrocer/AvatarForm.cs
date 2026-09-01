@@ -110,6 +110,7 @@ public partial class AvatarForm : ThemedForm
     private readonly AvatarEquippedItemLookup equippedItemLookup = new();
     private readonly AvatarItemHistory itemHistory = new();
     private readonly Dictionary<string, (Bitmap Icon, string Name)> historyDisplayCache = new();
+    private readonly List<AvatarSearchItem> searchItems = new();
     private TabPage historyTabPage = null!;
     private BaseDataGridView historyGrid = null!;
     ImageListView AvatarListView;
@@ -923,33 +924,45 @@ public partial class AvatarForm : ThemedForm
     static bool Loaded;
     static bool SearchGridLoaded;
 
-    void DumpEqpString(Wz_Node Node)
+    private void CacheSearchItems(Wz_Node node)
     {
-        if (Node.Text == "name")
+        if (node.Text == "name")
         {
-            string itemId = Node.ParentNode.Text.Length == 5
-                ? "000" + Node.ParentNode.Text
-                : "0" + Node.ParentNode.Text;
-            int? cashValue = CashOnlyCheckBox.Checked
-                ? GetCharacterCashValue(itemId)
-                : null;
-            if (AvatarCashFilter.ShouldIncludeAvatarItem(
-                    CashOnlyCheckBox.Checked,
-                    cashValue,
-                    itemId)
-                && AvatarGenderFilter.ShouldInclude(SelectedGenderFilter, itemId))
+            string itemId = node.ParentNode.Text.Length == 5
+                ? "000" + node.ParentNode.Text
+                : "0" + node.ParentNode.Text;
+            searchItems.Add(new AvatarSearchItem(
+                itemId,
+                " " + node.ToStr(),
+                GetCharacterCashValue(itemId)));
+        }
+        foreach (Wz_Node child in node.Nodes)
+        {
+            if ((node.Text != "Android") && (node.Text != "ArcaneForce") && (node.Text != "Bits") && (node.Text != "Dragon") &&
+             (node.Text != "Mechanic") && (node.Text != "PetEquip") && (node.Text != "Skillskin") && (node.Text != "Taming") &&
+             (node.Text != "MonsterBattle") && (node.Text.LeftStr(3) != "135") && (node.Text.LeftStr(3) != "150") &&
+             (node.Text.LeftStr(3) != "151") && (node.Text.LeftStr(3) != "160") && (node.Text.LeftStr(3) != "169") &&
+             (node.Text.LeftStr(3) != "111") && (node.Text.LeftStr(3) != "112") && (node.Text.LeftStr(3) != "114"))
             {
-                SearchGrid.Rows.Add(itemId, " " + Node.ToStr());
+                CacheSearchItems(child);
             }
         }
-        foreach (var Iter in Node.Nodes)
+    }
+
+    private void EnsureSearchItemsCached()
+    {
+        if (searchItems.Count > 0 || Wz.HasHardCodedStrings)
         {
-            if ((Node.Text != "Android") && (Node.Text != "ArcaneForce") && (Node.Text != "Bits") && (Node.Text != "Dragon") &&
-             (Node.Text != "Mechanic") && (Node.Text != "PetEquip") && (Node.Text != "Skillskin") && (Node.Text != "Taming") &&
-             (Node.Text != "MonsterBattle") && (Node.Text.LeftStr(3) != "135") && (Node.Text.LeftStr(3) != "150") &&
-             (Node.Text.LeftStr(3) != "151") && (Node.Text.LeftStr(3) != "160") && (Node.Text.LeftStr(3) != "169") &&
-             (Node.Text.LeftStr(3) != "111") && (Node.Text.LeftStr(3) != "112") && (Node.Text.LeftStr(3) != "114"))
-                DumpEqpString(Iter);
+            return;
+        }
+
+        if (Wz.HasNode("String/Eqp.img"))
+        {
+            CacheSearchItems(Wz.GetNodeA("String/Eqp.img/Eqp"));
+        }
+        else
+        {
+            CacheSearchItems(Wz.GetNodeA("String/Item.img/Eqp"));
         }
     }
 
@@ -965,15 +978,15 @@ public partial class AvatarForm : ThemedForm
         SearchGrid.SearchGrid.Rows.Clear();
         Win32.SendMessage(SearchGrid.Handle, false);
 
-        if (!Wz.HasHardCodedStrings)
+        EnsureSearchItemsCached();
+        foreach (AvatarSearchItem item in searchItems)
         {
-            if (Wz.HasNode("String/Eqp.img"))
+            if (AvatarSearchResultFilter.ShouldInclude(
+                    item,
+                    CashOnlyCheckBox.Checked,
+                    SelectedGenderFilter))
             {
-                DumpEqpString(Wz.GetNodeA("String/Eqp.img/Eqp"));
-            }
-            else
-            {
-                DumpEqpString(Wz.GetNodeA("String/Item.img/Eqp"));
+                SearchGrid.Rows.Add(item.ItemId, item.Name);
             }
         }
 

@@ -382,11 +382,14 @@ public class Player : JumperSprite
                     }
                     break;
                 case PartName.Body:
-
-                    Equip.Data.AddOrReplace("body/" + Iter.Text + "/FrameCount", Iter.Nodes.Count - 1);
+                    Equip.Data.AddOrReplace(
+                        "body/" + Iter.Text + "/FrameCount",
+                        AvatarAnimationFramePolicy.GetMaximumFrame(Iter.Nodes.Select(node => node.Text)));
                     break;
                 case PartName.Face:
-                    Equip.Data.AddOrReplace("face/" + Iter.Text + "/FrameCount", Iter.Nodes.Count - 1);
+                    Equip.Data.AddOrReplace(
+                        "face/" + Iter.Text + "/FrameCount",
+                        AvatarAnimationFramePolicy.GetMaximumFrame(Iter.Nodes.Select(node => node.Text)));
                     break;
             }
             foreach (var Iter2 in Iter.Nodes)
@@ -1117,11 +1120,27 @@ public class AvatarParts : SpriteEx
 
         if (!Wz.HasDataE(C + Equip.GetDir(ID) + ID + ".img/" + WpNum + State + "/" + Frame + "/" + Image) && (!IsAttack()) && (!Equip.DataS.ContainsKey(State + "/" + Frame)))
             Frame = 0;
-        FrameCount = Equip.Data["body/" + State + "/FrameCount"];
-        BodyDelay = Equip.Data["body/" + State + "/" + Frame + "/delay"];
+        FrameCount = Equip.Data.TryGetValue("body/" + State + "/FrameCount", out int bodyFrameCount)
+            ? bodyFrameCount
+            : 0;
+        AvatarAnimationFrameDelay bodyFrame = AvatarAnimationFramePolicy.ResolveFrameDelay(
+            Equip.Data,
+            "body",
+            State,
+            Frame);
+        Frame = bodyFrame.Frame;
+        BodyDelay = bodyFrame.Delay;
 
-        int FaceFrameCount = Equip.Data["face/" + Expression + "/FrameCount"];
-        FaceDelay = Equip.Data["face/" + Expression + "/" + FaceFrame + "/delay"];
+        int FaceFrameCount = Equip.Data.TryGetValue("face/" + Expression + "/FrameCount", out int faceFrameCount)
+            ? faceFrameCount
+            : 0;
+        AvatarAnimationFrameDelay faceFrame = AvatarAnimationFramePolicy.ResolveFrameDelay(
+            Equip.Data,
+            "face",
+            Expression,
+            FaceFrame);
+        FaceFrame = faceFrame.Frame;
+        FaceDelay = faceFrame.Delay;
 
         string Directory = Equip.GetDir(ID);
         string Path;
