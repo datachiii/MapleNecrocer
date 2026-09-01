@@ -73,4 +73,19 @@ public sealed class ChineseSearchQueryTests
         Assert.True(ChineseSearchQuery.ContainsAny("剑士披风", candidates));
         Assert.False(ChineseSearchQuery.ContainsAny("帽子", candidates));
     }
+
+    [Theory]
+    [InlineData("迷霧 白夜", "黑色迷霧白夜髮型", true)]
+    [InlineData("迷霧 白夜", "迷霧小夜曲", false)]
+    [InlineData("迷霧 -紅色", "黑色迷霧白夜髮型", true)]
+    [InlineData("迷霧 -紅色", "紅色迷霧白夜髮型", false)]
+    [InlineData("迷霧 -紅色 -紫色", "紫色迷霧白夜髮型", false)]
+    [InlineData("-紅色", "黑色迷霧白夜髮型", true)]
+    public void MatchesTerms_AppliesSpaceSeparatedAndAndExcludedTerms(
+        string query,
+        string value,
+        bool expected)
+    {
+        Assert.Equal(expected, ChineseSearchQuery.MatchesTerms([value], query));
+    }
 }

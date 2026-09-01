@@ -46,6 +46,31 @@ internal static class ChineseSearchQuery
             value.IndexOf(candidate, StringComparison.OrdinalIgnoreCase) >= 0);
     }
 
+    internal static bool MatchesTerms(IEnumerable<string> values, string query)
+    {
+        string[] searchableValues = values.ToArray();
+        foreach (string rawTerm in query.Split(
+                     new[] { ' ', '\t', '\r', '\n' },
+                     StringSplitOptions.RemoveEmptyEntries))
+        {
+            bool isExcluded = rawTerm.StartsWith('-');
+            string term = isExcluded ? rawTerm[1..] : rawTerm;
+            if (term.Length == 0)
+            {
+                continue;
+            }
+
+            bool matches = searchableValues.Any(value =>
+                ContainsAny(value, CreateCandidates(term)));
+            if (isExcluded ? matches : !matches)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private static string? ConvertToSimplifiedChinese(string source)
     {
         int requiredLength = LCMapStringEx(
