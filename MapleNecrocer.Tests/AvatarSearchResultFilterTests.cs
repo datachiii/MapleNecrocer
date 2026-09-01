@@ -22,4 +22,29 @@ public sealed class AvatarSearchResultFilterTests
 
         Assert.Equal(expected, AvatarSearchResultFilter.ShouldInclude(item, cashOnly, gender));
     }
+
+    [Theory]
+    [InlineData("All", "Hair", true)]
+    [InlineData("Hair", "Hair", true)]
+    [InlineData("Face", "Hair", false)]
+    [InlineData("FaceAcc", "FaceAcc", true)]
+    public void ShouldInclude_AppliesSelectedCategory(
+        string selectedCategoryName,
+        string itemCategoryName,
+        bool expected)
+    {
+        var item = new AvatarSearchItem(
+            "01040000",
+            "Test",
+            CashValue: 1,
+            Enum.Parse<PartName>(itemCategoryName));
+
+        Assert.Equal(
+            expected,
+            AvatarSearchResultFilter.ShouldInclude(
+                item,
+                cashOnly: false,
+                AvatarGenderSelection.All,
+                Enum.Parse<AvatarSearchCategory>(selectedCategoryName)));
+    }
 }

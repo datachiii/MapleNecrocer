@@ -73,6 +73,8 @@
             tabPage4 = new TabPage();
             textBox1 = new TextBox();
             label3 = new Label();
+            CategoryFilterLabel = new Label();
+            CategoryFilterComboBox = new ComboBox();
             panel1 = new Panel();
             UseButton = new Button();
             pictureBox1 = new PictureBox();
@@ -679,6 +681,8 @@
             // 
             // tabPage4
             // 
+            tabPage4.Controls.Add(CategoryFilterComboBox);
+            tabPage4.Controls.Add(CategoryFilterLabel);
             tabPage4.Controls.Add(textBox1);
             tabPage4.Controls.Add(label3);
             tabPage4.Controls.Add(panel1);
@@ -706,6 +710,27 @@
             label3.Size = new Size(50, 17);
             label3.TabIndex = 1;
             label3.Text = "Search";
+            // 
+            // CategoryFilterLabel
+            // 
+            CategoryFilterLabel.AutoSize = true;
+            CategoryFilterLabel.Location = new Point(438, 79);
+            CategoryFilterLabel.Name = "CategoryFilterLabel";
+            CategoryFilterLabel.Size = new Size(62, 17);
+            CategoryFilterLabel.TabIndex = 4;
+            CategoryFilterLabel.Text = "Category";
+            // 
+            // CategoryFilterComboBox
+            // 
+            CategoryFilterComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+            CategoryFilterComboBox.FormattingEnabled = true;
+            CategoryFilterComboBox.Items.AddRange(new object[] { "All", "Hair", "Face", "Cap", "Coat", "Pants", "Longcoat", "Cape", "Shoes", "Glove", "Glass", "Weapon", "FaceAcc" });
+            CategoryFilterComboBox.Location = new Point(506, 76);
+            CategoryFilterComboBox.Name = "CategoryFilterComboBox";
+            CategoryFilterComboBox.SelectedIndex = 0;
+            CategoryFilterComboBox.Size = new Size(150, 25);
+            CategoryFilterComboBox.TabIndex = 5;
+            CategoryFilterComboBox.SelectedIndexChanged += CategoryFilterComboBox_SelectedIndexChanged;
             // 
             // panel1
             // 
@@ -1192,6 +1217,8 @@
         private Label label1;
         private TextBox textBox1;
         private Label label3;
+        private Label CategoryFilterLabel;
+        private ComboBox CategoryFilterComboBox;
         private Button UseButton;
         private TabPage tabPage5;
         private Label label4;

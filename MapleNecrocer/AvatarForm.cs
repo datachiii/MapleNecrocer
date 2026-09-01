@@ -934,7 +934,8 @@ public partial class AvatarForm : ThemedForm
             searchItems.Add(new AvatarSearchItem(
                 itemId,
                 " " + node.ToStr(),
-                GetCharacterCashValue(itemId)));
+                GetCharacterCashValue(itemId),
+                Equip.GetPart(itemId)));
         }
         foreach (Wz_Node child in node.Nodes)
         {
@@ -984,7 +985,8 @@ public partial class AvatarForm : ThemedForm
             if (AvatarSearchResultFilter.ShouldInclude(
                     item,
                     CashOnlyCheckBox.Checked,
-                    SelectedGenderFilter))
+                    SelectedGenderFilter,
+                    SelectedSearchCategory))
             {
                 SearchGrid.Rows.Add(item.ItemId, item.Name);
             }
@@ -1003,6 +1005,14 @@ public partial class AvatarForm : ThemedForm
 
         PopulateSearchGrid();
         SearchGrid.Search(textBox1.Text);
+    }
+
+    private AvatarSearchCategory SelectedSearchCategory =>
+        Enum.Parse<AvatarSearchCategory>(CategoryFilterComboBox.Text);
+
+    private void CategoryFilterComboBox_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        RefreshSearchGridForFilters();
     }
 
     void CellClick(BaseDataGridView DataGrid, DataGridViewCellEventArgs e)
