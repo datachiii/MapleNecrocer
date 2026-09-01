@@ -909,6 +909,17 @@ public partial class AvatarForm : ThemedForm
         RefreshSearchGridForFilters();
     }
 
+    private void GenderFilterComboBox_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (!AvatarGenderInputPolicy.ShouldSuppressComboBoxNavigation(e.KeyCode))
+        {
+            return;
+        }
+
+        e.SuppressKeyPress = true;
+        e.Handled = true;
+    }
+
     static bool Loaded;
     static bool SearchGridLoaded;
 

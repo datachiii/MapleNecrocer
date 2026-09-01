@@ -1063,6 +1063,7 @@
             GenderFilterComboBox.TabIndex = 29;
             GenderFilterComboBox.SelectedIndex = 0;
             GenderFilterComboBox.SelectedIndexChanged += GenderFilterComboBox_SelectedIndexChanged;
+            GenderFilterComboBox.KeyDown += GenderFilterComboBox_KeyDown;
             // 
             // label5
             // 
